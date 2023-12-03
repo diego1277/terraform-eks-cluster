@@ -22,3 +22,8 @@ output "openid_connect_arn" {
   description = "openid connect arn"
   value = try(aws_iam_openid_connect_provider.this[0].arn,null)
 }
+
+output "cluster_security_group_id" {
+  description = "eks security groups id"
+  value   = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+}
