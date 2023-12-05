@@ -13,7 +13,7 @@ resource "aws_launch_template" "custom_node" {
     }
   }
 
-  image_id      = each.value.image_id
+  image_id = each.value.image_id
 
   instance_type = each.value.instance_type
 
@@ -23,7 +23,7 @@ Content-Type: multipart/mixed; boundary="==MYBOUNDARY=="
 --==MYBOUNDARY==
 Content-Type: text/x-shellscript; charset="us-ascii"
 #!/bin/bash
-/etc/eks/bootstrap.sh your-eks-cluster
+/etc/eks/bootstrap.sh ${var.name}
 --==MYBOUNDARY==--\
   EOF
   )
@@ -31,27 +31,23 @@ Content-Type: text/x-shellscript; charset="us-ascii"
   tag_specifications {
     resource_type = "instance"
 
-    tags = merge(local.node_common_tags, try(each.value.tags, {})) 
+    tags = merge(local.node_common_tags, try(each.value.tags, {}))
   }
 }
 
 resource "aws_eks_node_group" "custom_node" {
   for_each        = length(var.custom_node_group) > 0 ? var.custom_node_group : {}
   cluster_name    = aws_eks_cluster.this.name
-  node_group_name = each.value.name
+  node_group_name = "${each.value.name}_custom"
   node_role_arn   = aws_iam_role.node.arn
   capacity_type   = each.value.capacity_type
-  instance_types  = each.value.instance_types
-  version         = var.cluster_version
+  #instance_types  = each.value.instance_types
+  #version         = var.cluster_version
   subnet_ids      = each.value.subnet_ids
 
   launch_template {
     name    = aws_launch_template.custom_node[each.key].name
     version = aws_launch_template.custom_node[each.key].latest_version
-  }
-
-  remote_access {
-    ec2_ssh_key = aws_key_pair.custom_node[each.key].id
   }
 
   scaling_config {
@@ -83,9 +79,10 @@ resource "aws_eks_node_group" "custom_node" {
 
 }
 
+/*
 resource "aws_key_pair" "custom_node" {
   for_each   = length(var.custom_node_group) > 0 ? var.custom_node_group : {}
-  key_name   = "${each.value.name}_key"
+  key_name   = "${each.value.name}_custom_node_key"
   public_key = tls_private_key.custom_node_rsa[each.key].public_key_openssh
 }
 
@@ -98,5 +95,6 @@ resource "tls_private_key" "custom_node_rsa" {
 resource "local_file" "custom_node_rsa_private_key" {
   for_each = length(var.custom_node_group) > 0 ? var.custom_node_group : {}
   content  = tls_private_key.custom_node_rsa[each.key].private_key_openssh
-  filename = "${path.root}/${each.value.name}.pem"
+  filename = "${path.root}/${each.value.name}_custom_node.pem"
 }
+*/
