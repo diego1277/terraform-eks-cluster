@@ -2,10 +2,8 @@ resource "aws_launch_template" "custom_node" {
   for_each = length(var.custom_node_group) > 0 ? var.custom_node_group : {}
   name     = "${each.value.name}_launch_template"
 
-  #vpc_security_group_ids = concat(each.value.security_group_ids,[aws_eks_cluster.this.vpc_config[0].cluster_security_group_id])
-
   network_interfaces {
-     security_groups = concat(each.value.security_group_ids,[aws_eks_cluster.this.vpc_config[0].cluster_security_group_id])
+     security_groups = concat(try(each.value.security_group_ids,[]),[aws_eks_cluster.this.vpc_config[0].cluster_security_group_id,module.node_sg.id])
    }
 
   block_device_mappings {
@@ -45,8 +43,6 @@ resource "aws_eks_node_group" "custom_node" {
   node_group_name = "${each.value.name}_custom"
   node_role_arn   = aws_iam_role.node.arn
   capacity_type   = each.value.capacity_type
-  #instance_types  = each.value.instance_types
-  #version         = var.cluster_version
   subnet_ids      = each.value.subnet_ids
 
   launch_template {
@@ -82,23 +78,3 @@ resource "aws_eks_node_group" "custom_node" {
   }
 
 }
-
-/*
-resource "aws_key_pair" "custom_node" {
-  for_each   = length(var.custom_node_group) > 0 ? var.custom_node_group : {}
-  key_name   = "${each.value.name}_custom_node_key"
-  public_key = tls_private_key.custom_node_rsa[each.key].public_key_openssh
-}
-
-resource "tls_private_key" "custom_node_rsa" {
-  for_each  = length(var.custom_node_group) > 0 ? var.custom_node_group : {}
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-resource "local_file" "custom_node_rsa_private_key" {
-  for_each = length(var.custom_node_group) > 0 ? var.custom_node_group : {}
-  content  = tls_private_key.custom_node_rsa[each.key].private_key_openssh
-  filename = "${path.root}/${each.value.name}_custom_node.pem"
-}
-*/
