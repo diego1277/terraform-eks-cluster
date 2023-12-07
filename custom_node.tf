@@ -2,7 +2,11 @@ resource "aws_launch_template" "custom_node" {
   for_each = length(var.custom_node_group) > 0 ? var.custom_node_group : {}
   name     = "${each.value.name}_launch_template"
 
-  vpc_security_group_ids = concat(each.value.security_group_ids,[aws_eks_cluster.this.vpc_config[0].cluster_security_group_id])
+  #vpc_security_group_ids = concat(each.value.security_group_ids,[aws_eks_cluster.this.vpc_config[0].cluster_security_group_id])
+
+  network_interfaces {
+     security_groups = concat(each.value.security_group_ids,[aws_eks_cluster.this.vpc_config[0].cluster_security_group_id])
+   }
 
   block_device_mappings {
     device_name = "/dev/xvda"
