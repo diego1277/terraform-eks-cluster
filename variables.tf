@@ -54,3 +54,9 @@ variable "custom_node_group" {
   type        = map(any)
   default     = {}
 }
+
+variable "enable_karpenter" {
+  description = "define se karpenter esta habilitado"
+  type        = bool
+  default     = true
+}
